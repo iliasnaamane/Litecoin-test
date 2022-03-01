@@ -80,5 +80,67 @@ Verify that the pod deployed by the statefulset is correctly running & ready.
 Verify that the PVC & PV has been correctly created and mounted.
 ![PV](pv.png)
 
+## Question 3
+
+Usually a basic CI/CD pipeline contains the following steps:
+
+1) Build code & Install external package
+2) Linter
+3) Unit testing
+4) Code Quality gate 
+5) Build Docker image
+6) Push Docker image to the registry / Artifactory
+7) Deploy the docker image in K8s cluster.
+
+As there is no code developed here, let's implement stage 5,6 & 7 using Gitlab-CI. 
+
+### Build & Push Docker Image
+
+```
+buildpush:
+  stage: build
+  image:
+    name: docker:stable
+  services:
+  - docker:stable-dind
+  script:
+    - docker build -t $REPO_NAME .
+    - docker tag $REPO_NAME $REPO_REGISTRY_URL:$TAG
+    - docker push $REPO_REGISTRY_URL:$TAG
+    - docker rmi $REPO_NAME $REPO_REGISTRY_URL:$TAG
+```
+
+### Deploy
+
+In order to deploy, first at least one single Gitlab runner into Kubernetes needs to be deployed following [Helm Chart](https://docs.gitlab.com/runner/install/kubernetes.html)
+
+Gitlab runner is deployed as a Pod in order to execute the Gitlab job. The Helm chart should be configured before.
+
+A new helm chart should be created as well in order to deploy the ecosystem. In our case, only statefulset needs to be deployed, so this element can be encapsulated inside a new Helm chart. The deployment stage should be similar to this:
+
+```
+deploy:
+  stage: deploy
+  image: alpine/helm:latest
+  script:
+    - helm init --client-only
+    - helm --namespace $NAMESPACE upgrade -i $REPO_NAME --set image.tag=$TAG,env=$ENV,image.repository=$REPO_REGISTRY_URL $PATH_TO_VALUES
+  tags:
+    - k8s
+    - dev
+```
+
+The final result of the Gitlab CI/CD pipeline should be similar to [this](https://github.com/iliasnaamane/Litecoin-test/blob/master/gitlab-ci.yml).
+
+Another approach could be the usage of ArgoCD as it is easy to setup using Helm chart and in order to separate CI & Deployment tools. [GitOps - ArgoCD & Gitlab-CI](https://medium.com/@andrew.kaczynski/gitops-in-kubernetes-argo-cd-and-gitlab-ci-cd-5828c8eb34d6)
+
+
+
+
+
+
+
+
+
 
 
