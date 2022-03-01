@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: litecoin
+spec:
+  serviceName: litecoin
+  selector:
+    matchLabels:
+      app: litecoin # has to match .spec.template.metadata.labels
+  replicas: 1 # by default is 1
+  minReadySeconds: 10 # by default is 0
+  template:
+    metadata:
+      labels:
+        app: litecoin # has to match .spec.selector.matchLabels
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: litecoin
+        image: litecoin:0.18.1
+        ports:
+        - containerPort: 9332
+          name: litecoin
+        volumeMounts:
+        - name: litecoin
+          mountPath: /home/litecoin/.litecoin
+  volumeClaimTemplates:
+  - metadata:
+      name: litecoin
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+
