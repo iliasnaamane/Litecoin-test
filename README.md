@@ -148,6 +148,27 @@ Above, ``` docker images -a  | grep hours | grep litecoin ``` list all images th
 
 
 
+## Question 5
+
+The easiest way here is to run the previous shell script using Python but of course it is not the safest way. Running a shell exec is somehow risky in term of security and commands injections.
+
+From my point of view, after a quick research a good way is to code the whole script in Python based on [docker-sdk](https://docker-py.readthedocs.io/en/stable/) library. 
+
+## Question 6
+
+I have rarely used Terraform in my past experiences. For policies I would recommend [Open policy agent](https://www.openpolicyagent.org/docs/v0.12.2/kubernetes-admission-control/) that handles policies through a [custom admission controller](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/). The rules are made in Rego "Policy language" and implemented inside configmaps consumed by the webhook of OPA. The communication between components  must be over TLS. 
+
+The usage of cert-manager can be useful for certificate management in case we use OPA as it is useful to handle certificate authorities, certificate injection and so on..
+
+Also I have noticed that there is some roles here.. why don't we use basic Kubernetes roles, rolebindings clusterroles, groups users etc..
+
+I can't go further for this question as I need more clarification and answers to some questions.
+
+
+
+
+
+
 
 
 
