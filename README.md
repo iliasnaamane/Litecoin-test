@@ -135,6 +135,16 @@ The final result of the Gitlab CI/CD pipeline should be similar to [this](https:
 Another approach could be the usage of ArgoCD as it is easy to setup using Helm chart and in order to separate CI & Deployment tools. [GitOps - ArgoCD & Gitlab-CI](https://medium.com/@andrew.kaczynski/gitops-in-kubernetes-argo-cd-and-gitlab-ci-cd-5828c8eb34d6)
 
 
+## Question 4
+
+Make script in order to delete all non-attached litecoin docker images that have age between 4 hours and 8 hours:
+
+```
+docker rmi $(docker images -a  | grep hours | grep litecoin |  awk '3<$4 && $4<8' | awk '{print $3}')
+
+```
+
+Above, ``` docker images -a  | grep hours | grep litecoin ``` list all images that have litecoin and hours in age. ```  awk '3<$4 && $4<8' ``` is for filtering by age between 4 and 8. Last pipe ``` awk '{print $3}' ``` is to return images ids that will be given as an argument to ```docker rmi``` command in order to delete them.
 
 
 
