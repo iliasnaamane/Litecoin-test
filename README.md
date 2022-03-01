@@ -92,26 +92,85 @@ Usually a basic CI/CD pipeline contains the following steps:
 3) Unit testing
 4) Code Quality gate 
 5) Build Docker image
-6) Push Docker image to the registry / Artifactory
-7) Deploy the docker image in K8s cluster.
+6) Image Scanning
+7) Push Docker image to the registry / Artifactory
+8) Deploy the docker image in K8s cluster.
 
-As there is no code developed here, let's implement stage 5,6 & 7 using Gitlab-CI. 
+As there is no code developed here, let's implement stage 5,6,7 & 8 using Gitlab-CI. 
 
-### Build & Push Docker Image
+### Build  Docker Image
 
 ```
-buildpush:
+build:
   stage: build
   image:
     name: docker:stable
   services:
   - docker:stable-dind
   script:
-    - docker build -t $REPO_NAME .
-    - docker tag $REPO_NAME $REPO_REGISTRY_URL:$TAG
-    - docker push $REPO_REGISTRY_URL:$TAG
-    - docker rmi $REPO_NAME $REPO_REGISTRY_URL:$TAG
+    - docker build -t $REPO_NAME:$CI_COMMIT_REF_NAME .
+
 ```
+
+
+### Scan  Docker Image using Anchor
+
+Before pushing the image into the registry, first a security check must be executed in the pipeline in order to verify if the docker image is compliant. For this Anchor has been integrated to the Gitlab-Ci.
+
+```
+scan:
+  stage: scan
+  image:
+    name: anchore/anchore-engine:latest
+  entrypoint: [""]
+  services:
+  - name: anchore/engine-db-preload:latest
+    alias: anchore-db
+
+  variables:
+    GIT_STRATEGY: none
+    ANCHORE_HOST_ID: "localhost"
+    ANCHORE_ENDPOINT_HOSTNAME: "localhost"
+    ANCHORE_CLI_USER: "admin"
+    ANCHORE_CLI_PASS: "foobar"
+    ANCHORE_CLI_SSL_VERIFY: "n"
+    ANCHORE_FAIL_ON_POLICY: "true"
+    ANCHORE_TIMEOUT: 500
+  script:
+    - |
+    curl -o /tmp/anchore_ci_tools.py https://raw.githubusercontent.com/anchore/ci-tools/master/scripts/anchore_ci_tools.py
+    chmod +x /tmp/anchore_ci_tools.py
+    ln -s /tmp/anchore_ci_tools.py /usr/local/bin/anchore_ci_tools
+    - anchore_ci_tools --setup
+    - anchore-cli registry add "$CI_REGISTRY" gitlab-ci-token "$CI_JOB_TOKEN" --skip-validate
+    - anchore_ci_tools --analyze --report --image "$REPO_NAME:$CI_COMMIT_REF_NAME" --timeout "$ANCHORE_TIMEOUT"
+    - |
+    if ; then
+    anchore-cli evaluate check "$REPO_NAME:$CI_COMMIT_REF_NAME"
+    else
+    set +o pipefail
+    anchore-cli evaluate check "$REPO_NAME:$CI_COMMIT_REF_NAME" | tee /dev/null
+    fi
+
+
+```
+
+### Push Docker Image into the registry / Artifactory
+After security checks, the pipeline will push the docker image into the registry.
+
+```
+push:
+  stage: push
+  image:
+    name: docker:stable
+  services:
+  - docker:stable-dind
+  script:
+    - docker tag $$REPO_NAME:$CI_COMMIT_REF_NAME $REPO_REGISTRY_URL:$TAG
+    - docker push $REPO_REGISTRY_URL:$TAG
+    - docker rmi $$REPO_NAME:$CI_COMMIT_REF_NAME $REPO_REGISTRY_URL:$TAG
+```
+
 
 ### Deploy
 
