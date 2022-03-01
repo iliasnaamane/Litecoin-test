@@ -1,0 +1,19 @@
+{
+  "name": "DefaultPolicy",
+  "version": "1_0",
+  "comment": "Policy for basic checks",
+  "id": "policy1",
+  "rules": [
+      {
+        "action": "STOP",
+        "gate": "vulnerabilities",
+        "id": "rule1",
+        "params": [
+          { "name": "package_type", "value": "all" },
+          { "name": "severity_comparison", "value": ">=" },
+          { "name": "severity", "value": "medium" }
+        ],
+        "trigger": "package"
+      }
+  ]
+}
