@@ -1,0 +1,30 @@
+# Pipeline steps list
+stages:
+  - build
+  - deploy
+
+# Variables used in different stages
+variables:
+  REPO_NAME: litecoin:0.18.1
+
+buildpush:
+  stage: build
+  image:
+    name: docker:stable
+  services:
+  - docker:stable-dind
+  script:
+    - docker build -t $REPO_NAME .
+    - docker tag $REPO_NAME $REPO_REGISTRY_URL:$TAG
+    - docker push $REPO_REGISTRY_URL:$TAG
+    - docker rmi $REPO_NAME $REPO_REGISTRY_URL:$TAG
+
+deploy:
+  stage: deploy
+  image: alpine/helm:latest
+  script:
+    - helm init --client-only
+    - helm --namespace $NAMESPACE upgrade -i $REPO_NAME --set image.tag=$TAG,env=$ENV,image.repository=$REPO_REGISTRY_URL $PATH_TO_VALUES
+  tags:
+    - k8s
+    - dev
