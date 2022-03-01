@@ -90,15 +90,16 @@ Usually a basic CI/CD pipeline contains the following steps:
 1) Build code & Install external package
 2) Linter
 3) Unit testing
-4) Code Quality gate 
+4) Code Quality gate, Code Scanning & Dependencies scanning
 5) Build Docker image
 6) Image Scanning
 7) Push Docker image to the registry / Artifactory
 8) Deploy the docker image in K8s cluster.
 
-As there is no code developed here, let's implement stage 5,6,7 & 8 using Gitlab-CI. 
+As there is no code in the scope, let's implement stage 5,6,7 & 8 using Gitlab-CI. Please note that for this test I was able to demonstrate what stages and what  result the pipeline will have after full configuration.
 
 ### Build  Docker Image
+First step is to build the Docker Image.
 
 ```
 build:
@@ -156,7 +157,7 @@ scan:
 ```
 
 ### Push Docker Image into the registry / Artifactory
-After security checks, the pipeline will push the docker image into the registry.
+After security checks using Anchore, the pipeline will be allowed to push the docker image into the registry.
 
 ```
 push:
