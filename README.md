@@ -21,6 +21,9 @@ Time for scanning:
 
 curl -s https://ci-tools.anchore.io/inline_scan-v0.6.0 | bash -s -- -f -d Dockerfile -b .anchore-policy.json litecoin:0.18.1
 
+Scan result can be found below:
+
+![Scan](scan.png)
 
 ## Question 2
 
